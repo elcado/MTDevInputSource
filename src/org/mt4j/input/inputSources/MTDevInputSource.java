@@ -23,11 +23,6 @@ public class MTDevInputSource extends AbstractInputSource {
 		logger.setLevel(ILogger.INFO);
 	}
 
-	static {
-		// load native lib
-		System.loadLibrary("mtdev4j");
-	}
-
 	/*
 	 * Native functions
 	 */
@@ -91,6 +86,7 @@ public class MTDevInputSource extends AbstractInputSource {
 	private boolean is_ABS_MT_DISTANCE = false;
 
 	private AbstractMTApplication mtApp;
+	private static boolean loaded = false;
 
 	/**
 	 * Build a mtdev on the supplied device.
@@ -103,14 +99,31 @@ public class MTDevInputSource extends AbstractInputSource {
 
 		this.mtApp = mtApp;
 
-		// init/open device
-		if (this.openDevice(devFileName))
-			// get device capabilities
-			this.loadDeviceCaps();
+		if (!loaded){
+			// load native lib
+			System.loadLibrary("mtdev4j");
+
+			// init/open device
+			if (this.openDevice(devFileName)) {
+				// get device capabilities
+				this.loadDeviceCaps();
+
+				// set as loaded to avoid multiple instances
+				loaded = true;
+			}
+		}
+		else {
+			logger.error("MTDevInputSource may only be instantiated once.");
+			return;
+		}
+
 	}
 
 	@Override
 	public void onRegistered() {
+		// only register if correctly loaded
+		if (!loaded) return;
+		
 		logger.info("Linux native mtdev device '" + devName + "'");
 		if (this.is_ABS_MT_SLOT)
 			logger.debug("ABS_MT_SLOT:" + this.ABS_MT_SLOT);
