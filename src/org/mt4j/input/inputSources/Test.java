@@ -1,19 +1,23 @@
 package org.mt4j.input.inputSources;
 
-public class Test {
+import org.mt4j.MTApplication;
+import org.mt4j.input.InputManager;
 
+import basic.helloWorld.HelloWorldScene;
+
+public class Test extends MTApplication {
 	/** main */
 	public static void main(String[] args) {
-		MTDevInputSource mtdevice = null;
-		try {
-			mtdevice = new MTDevInputSource("/dev/input/event25");
-			
-			// work with device
-			;
-		}
-		finally {
-			if (mtdevice != null)
-				mtdevice.closeMTDevice();
-		}
+		initialize();
+	}
+
+	@Override
+	public void startUp() {
+		InputManager inputManager = this.getInputManager();
+		inputManager.registerInputSource(new MTDevInputSource(this, "/dev/input/event4"));
+//		inputManager.registerInputSource(new MTDevInputSource(this, "/dev/input/event25"));
+
+		// build scene
+		this.addScene(new HelloWorldScene(this, ""));
 	}
 }
