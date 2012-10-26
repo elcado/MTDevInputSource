@@ -19,8 +19,67 @@ public class MTDevInputSource extends AbstractInputSource {
 	private static final ILogger logger = MTLoggerFactory.getLogger(MTDevInputSource.class.getName());
 	static {
 		logger.setLevel(ILogger.ERROR);
-//		logger.setLevel(ILogger.DEBUG);
 		logger.setLevel(ILogger.INFO);
+//		logger.setLevel(ILogger.DEBUG);
+	}
+	
+	enum ABS_MT_CODE {
+		/** Number of device's slots */
+		ABS_MT_SLOT(0x2f),
+		/** Major axis of touching ellipse */
+		ABS_MT_TOUCH_MAJOR(0x30),
+		/** Minor axis (omit if circular) */
+		ABS_MT_TOUCH_MINOR(0x31),
+		/** Major axis of approaching ellipse */
+		ABS_MT_WIDTH_MAJOR(0x32),
+		/** Minor axis (omit if circular) */
+		ABS_MT_WIDTH_MINOR(0x33),
+		/** Ellipse orientation */
+		ABS_MT_ORIENTATION(0x34),
+		/** Center X ellipse position */
+		ABS_MT_POSITION_X(0x35),
+		/** Center Y ellipse position */
+		ABS_MT_POSITION_Y(0x36),
+		/** Type of touching device */
+		ABS_MT_TOOL_TYPE(0x37),
+		/** Group a set of packets as a blob */
+		ABS_MT_BLOB_ID(0x38),
+		/** Unique ID of initiated contact */
+		ABS_MT_TRACKING_ID(0x39),
+		/** Pressure on contact area */
+		ABS_MT_PRESSURE(0x3a),
+		/** Contact hover distance */
+		ABS_MT_DISTANCE(0x3b);
+
+		private int numericValue;
+
+		private ABS_MT_CODE(int numericValue) {
+			this.numericValue = numericValue;
+		}
+
+		public static ABS_MT_CODE fromValue(int numericValue) {
+			for (ABS_MT_CODE abs_mt_const : ABS_MT_CODE.values())
+				if (abs_mt_const.numericValue == numericValue)
+					return abs_mt_const;
+			return null;
+		}
+	}
+
+	enum ABS_MT_TYPE {
+		SYN_REPORT(0x00);
+
+		private int numericValue;
+
+		private ABS_MT_TYPE(int numericValue) {
+			this.numericValue = numericValue;
+		}
+
+		public static ABS_MT_TYPE fromValue(int numericValue) {
+			for (ABS_MT_TYPE abs_mt_type : ABS_MT_TYPE.values())
+				if (abs_mt_type.numericValue == numericValue)
+					return abs_mt_type;
+			return null;
+		}
 	}
 
 	/*
@@ -37,53 +96,25 @@ public class MTDevInputSource extends AbstractInputSource {
 	private native void closeDevice();
 
 	/**
-	 * Device name (DO NOT modify this filed as it is directly accessed from native code)
+	 * Device name (DO NOT modify this field as it is directly accessed from native code)
 	 */
 	private String devName;
 
-	/*
-	 * Device caps (DO NOT modify these fileds as they are directly accessed from native code)
+	/**
+	 * Device caps
 	 */
-
-	/** MT slot being modified */
-	private int ABS_MT_SLOT;
-	private boolean is_ABS_MT_SLOT = false;
-	/** Major axis of touching ellipse */
-	private int ABS_MT_TOUCH_MAJOR;
-	private boolean is_ABS_MT_TOUCH_MAJOR = false;
-	/** Minor axis (omit if circular) */
-	private int ABS_MT_TOUCH_MINOR;
-	private boolean is_ABS_MT_TOUCH_MINOR = false;
-	/** Major axis of approaching ellipse */
-	private int ABS_MT_WIDTH_MAJOR;
-	private boolean is_ABS_MT_WIDTH_MAJOR = false;
-	/** Minor axis (omit if circular) */
-	private int ABS_MT_WIDTH_MINOR;
-	private boolean is_ABS_MT_WIDTH_MINOR = false;
-	/** Ellipse orientation */
-	private int ABS_MT_ORIENTATION;
-	private boolean is_ABS_MT_ORIENTATION = false;
-	/** Center X ellipse position */
-	private int ABS_MT_POSITION_X;
-	private boolean is_ABS_MT_POSITION_X = false;
-	/** Center Y ellipse position */
-	private int ABS_MT_POSITION_Y;
-	private boolean is_ABS_MT_POSITION_Y = false;
-	/** Type of touching device */
-	private int ABS_MT_TOOL_TYPE;
-	private boolean is_ABS_MT_TOOL_TYPE = false;
-	/** Group a set of packets as a blob */
-	private int ABS_MT_BLOB_ID;
-	private boolean is_ABS_MT_BLOB_ID = false;
-	/** Unique ID of initiated contact */
-	private int ABS_MT_TRACKING_ID;
-	private boolean is_ABS_MT_TRACKING_ID = false;
-	/** Pressure on contact area */
-	private int ABS_MT_PRESSURE;
-	private boolean is_ABS_MT_PRESSURE = false;
-	/** Contact hover distance */
-	private int ABS_MT_DISTANCE;
-	private boolean is_ABS_MT_DISTANCE = false;
+	private Map<ABS_MT_CODE, Interval<Integer>> abs_mt_caps = new HashMap<>();
+	
+	/**
+	 * mtdev4j event callback (DO NOT modify this method as it is directly accessed from native code)
+	 * 
+	 * @param code {@link ABS_MT_CODE} capability code
+	 * @param min capability min value
+	 * @param max capability max value
+	 */
+	private void addCap(int code, int min, int max) {
+		abs_mt_caps.put(ABS_MT_CODE.fromValue(code), new Interval<Integer>(min, max));
+	}
 
 	private AbstractMTApplication mtApp;
 	private static boolean loaded = false;
@@ -125,32 +156,9 @@ public class MTDevInputSource extends AbstractInputSource {
 		if (!loaded) return;
 		
 		logger.info("Linux native mtdev device '" + devName + "'");
-		if (this.is_ABS_MT_SLOT)
-			logger.debug("ABS_MT_SLOT:" + this.ABS_MT_SLOT);
-		if (this.is_ABS_MT_TOUCH_MAJOR)
-			logger.debug("ABS_MT_TOUCH_MAJOR:" + this.ABS_MT_TOUCH_MAJOR);
-		if (this.is_ABS_MT_TOUCH_MINOR)
-			logger.debug("ABS_MT_TOUCH_MINOR:" + this.ABS_MT_TOUCH_MINOR);
-		if (this.is_ABS_MT_WIDTH_MAJOR)
-			logger.debug("ABS_MT_WIDTH_MAJOR:" + this.ABS_MT_WIDTH_MAJOR);
-		if (this.is_ABS_MT_WIDTH_MINOR)
-			logger.debug("ABS_MT_WIDTH_MINOR:" + this.ABS_MT_WIDTH_MINOR);
-		if (this.is_ABS_MT_ORIENTATION)
-			logger.debug("ABS_MT_ORIENTATION:" + this.ABS_MT_ORIENTATION);
-		if (this.is_ABS_MT_POSITION_X)
-			logger.debug("ABS_MT_POSITION_X:" + this.ABS_MT_POSITION_X);
-		if (this.is_ABS_MT_POSITION_Y)
-			logger.debug("ABS_MT_POSITION_Y:" + this.ABS_MT_POSITION_Y);
-		if (this.is_ABS_MT_TOOL_TYPE)
-			logger.debug("ABS_MT_TOOL_TYPE:" + this.ABS_MT_TOOL_TYPE);
-		if (this.is_ABS_MT_BLOB_ID)
-			logger.debug("ABS_MT_BLOB_ID:" + this.ABS_MT_BLOB_ID);
-		if (this.is_ABS_MT_TRACKING_ID)
-			logger.debug("ABS_MT_TRACKING_ID:" + this.ABS_MT_TRACKING_ID);
-		if (this.is_ABS_MT_PRESSURE)
-			logger.debug("ABS_MT_PRESSURE:" + this.ABS_MT_PRESSURE);
-		if (this.is_ABS_MT_DISTANCE)
-			logger.debug("ABS_MT_DISTANCE:" + this.ABS_MT_DISTANCE);
+		for (Entry<ABS_MT_CODE, Interval<Integer>> cap : abs_mt_caps.entrySet()) {
+			logger.debug(cap.getKey().name() + " " + cap.getValue().toString());
+		}
 
 		new Thread(new Runnable() {
 			@Override
@@ -181,55 +189,17 @@ public class MTDevInputSource extends AbstractInputSource {
 	 * Event handling code
 	 */
 
-	enum ABS_MT_CODE {
-		ABS_MT_SLOT(0x2f), /* MT slot being modified */
-		ABS_MT_TOUCH_MAJOR(0x30), /* Major axis of touching ellipse */
-		ABS_MT_TOUCH_MINOR(0x31), /* Minor axis (omit if circular) */
-		ABS_MT_WIDTH_MAJOR(0x32), /* Major axis of approaching ellipse */
-		ABS_MT_WIDTH_MINOR(0x33), /* Minor axis (omit if circular) */
-		ABS_MT_ORIENTATION(0x34), /* Ellipse orientation */
-		ABS_MT_POSITION_X(0x35), /* Center X ellipse position */
-		ABS_MT_POSITION_Y(0x36), /* Center Y ellipse position */
-		ABS_MT_TOOL_TYPE(0x37), /* Type of touching device */
-		ABS_MT_BLOB_ID(0x38), /* Group a set of packets as a blob */
-		ABS_MT_TRACKING_ID(0x39), /* Unique ID of initiated contact */
-		ABS_MT_PRESSURE(0x3a), /* Pressure on contact area */
-		ABS_MT_DISTANCE(0x3b); /* Contact hover distance */
-
-		private int numericValue;
-
-		private ABS_MT_CODE(int numericValue) {
-			this.numericValue = numericValue;
-		}
-
-		public static ABS_MT_CODE fromValue(int numericValue) {
-			for (ABS_MT_CODE abs_mt_const : ABS_MT_CODE.values())
-				if (abs_mt_const.numericValue == numericValue)
-					return abs_mt_const;
-			return null;
-		}
-	}
-
-	enum ABS_MT_TYPE {
-		SYN_REPORT(0x00);
-
-		private int numericValue;
-
-		private ABS_MT_TYPE(int numericValue) {
-			this.numericValue = numericValue;
-		}
-
-		public static ABS_MT_TYPE fromValue(int numericValue) {
-			for (ABS_MT_TYPE abs_mt_type : ABS_MT_TYPE.values())
-				if (abs_mt_type.numericValue == numericValue)
-					return abs_mt_type;
-			return null;
-		}
-	}
-
 	private Map<Integer, Long> slotIdToCursorID = new HashMap<>();
 	private Map<Integer, MTDevInputEvt> slotIdToCurrentEvt = new HashMap<>();
 
+	/**
+	 * mtdev4j event callback (DO NOT modify this method as it is directly accessed from native code)
+	 * 
+	 * @param slotId slot id concerned by this event (in case evtType != SYN_REPORT, otherwise all slots are concerned)
+	 * @param evtType event type (see {@link ABS_MT_TYPE})
+	 * @param evtCode event code (see {@link ABS_MT_CODE})
+	 * @param evtValue event value
+	 */
 	private void onMTDevTouch(int slotId, int evtType, int evtCode, int evtValue) {
 		// SYN_REPORT
 		if (ABS_MT_TYPE.fromValue(evtType) == ABS_MT_TYPE.SYN_REPORT) {
@@ -252,85 +222,87 @@ public class MTDevInputSource extends AbstractInputSource {
 		// get current slot event
 		MTDevInputEvt currentSlotEvt = slotIdToCurrentEvt.get(slotId);
 
-		// switch on event code
-		switch (evtMTCode) {
-			case ABS_MT_TRACKING_ID:
-				// ABS_MT_TRACKING_ID:
-				// - evtValue >= 0 -> starts MTDevInputEvt event
-				if (evtValue >= 0) {
-					bob.append("build INPUT_STARTED");
+		// handle ABS_MT_TRACKING_ID
+		if (evtMTCode == ABS_MT_CODE.ABS_MT_TRACKING_ID) {
+			// ABS_MT_TRACKING_ID:
+			// - evtValue >= 0 -> starts MTDevInputEvt event
+			if (evtValue >= 0) {
+				bob.append("build INPUT_STARTED");
 
-					// build MT4j cursor
-					InputCursor inputCursor = new InputCursor();
-					long cursorId = inputCursor.getId();
-					ActiveCursorPool.getInstance().putActiveCursor(cursorId, inputCursor);
-					slotIdToCursorID.put(slotId, cursorId);
+				// build MT4j cursor
+				InputCursor inputCursor = new InputCursor();
+				long cursorId = inputCursor.getId();
+				ActiveCursorPool.getInstance().putActiveCursor(cursorId, inputCursor);
+				slotIdToCursorID.put(slotId, cursorId);
 
-					// init an INPUT_STARTED event
-					slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this, 0, 0, MTFingerInputEvt.INPUT_STARTED, inputCursor));
-				}
+				// init an INPUT_STARTED event
+				slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this, 0, 0, MTFingerInputEvt.INPUT_STARTED, inputCursor));
+			}
 
-				// ABS_MT_TRACKING_ID:
-				// - evtValue == -1 -> ends MTDevInputEvt event
-				else {
-					bob.append("build INPUT_ENDED");
+			// ABS_MT_TRACKING_ID:
+			// - evtValue == -1 -> ends MTDevInputEvt event
+			else {
+				bob.append("build INPUT_ENDED");
 
-					// cannot end if there is no current event
-					if (currentSlotEvt == null)
-						break;
-
-					// get MT4j cursor associated with this slot
-					Long cursorId = slotIdToCursorID.get(slotId);
-					if (cursorId == null)
-						break;
-					InputCursor inputCursor = ActiveCursorPool.getInstance().getActiveCursorByID(cursorId);
-
-					// init an INPUT_ENDED event
-					slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this, currentSlotEvt.getX(), currentSlotEvt.getY(),
-						MTFingerInputEvt.INPUT_ENDED, inputCursor));
-				}
-
-				break;
-			case ABS_MT_POSITION_X:
-				bob.append("set ABS_MT_POSITION_X");
-
-				// cannot update if there is no current event
+				// cannot end if there is no current event
 				if (currentSlotEvt == null)
+					return;
+
+				// get MT4j cursor associated with this slot
+				Long cursorId = slotIdToCursorID.get(slotId);
+				if (cursorId == null)
+					return;
+				InputCursor inputCursor = ActiveCursorPool.getInstance().getActiveCursorByID(cursorId);
+
+				// init an INPUT_ENDED event
+				slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this, currentSlotEvt.getX(), currentSlotEvt.getY(),
+					MTFingerInputEvt.INPUT_ENDED, inputCursor));
+			}
+
+		}
+		else {
+			bob.append("set " + evtMTCode.name());
+			
+			// cannot update if there is no current event
+			if (currentSlotEvt == null) return;
+			
+			// check device capability
+			Interval<Integer> capInterval = abs_mt_caps.get(evtMTCode);
+			if (capInterval == null) return;
+			
+			// normalize value
+			float normEvtValue = (float) evtValue;
+			normEvtValue -= capInterval.getMin();
+			normEvtValue /= capInterval.getLength();
+
+			// switch on event code
+			switch (evtMTCode) {
+				case ABS_MT_TRACKING_ID:
 					break;
-
-				// correct form device to screen coord
-				float screenX = ((float) evtValue / this.ABS_MT_POSITION_X) * this.mtApp.getWidth();
-
-				// set x
-				currentSlotEvt.setScreenX(screenX);
-
-				break;
-			case ABS_MT_POSITION_Y:
-				bob.append("set ABS_MT_POSITION_Y");
-
-				// cannot update if there is no current event
-				if (currentSlotEvt == null)
+				case ABS_MT_POSITION_X:
+					// correct form device to screen coord
+					float screenX = normEvtValue * this.mtApp.getWidth();
+					currentSlotEvt.setScreenX(screenX);
+	
 					break;
-
-				// correct form device to screen coord
-				float screenY = ((float) evtValue / this.ABS_MT_POSITION_Y) * this.mtApp.getHeight();
-
-				// set y
-				currentSlotEvt.setScreenY(screenY);
-
-				break;
-			case ABS_MT_BLOB_ID:
-			case ABS_MT_DISTANCE:
-			case ABS_MT_ORIENTATION:
-			case ABS_MT_PRESSURE:
-			case ABS_MT_SLOT:
-			case ABS_MT_TOOL_TYPE:
-			case ABS_MT_TOUCH_MAJOR:
-			case ABS_MT_TOUCH_MINOR:
-			case ABS_MT_WIDTH_MAJOR:
-			case ABS_MT_WIDTH_MINOR:
-				bob.append(evtMTCode.name() + " -> " + evtValue);
-				break;
+				case ABS_MT_POSITION_Y:
+					// correct form device to screen coord
+					float screenY = normEvtValue * this.mtApp.getWidth();
+					currentSlotEvt.setScreenY(screenY);
+	
+					break;
+				case ABS_MT_BLOB_ID:
+				case ABS_MT_DISTANCE:
+				case ABS_MT_ORIENTATION:
+				case ABS_MT_PRESSURE:
+				case ABS_MT_SLOT:
+				case ABS_MT_TOOL_TYPE:
+				case ABS_MT_TOUCH_MAJOR:
+				case ABS_MT_TOUCH_MINOR:
+				case ABS_MT_WIDTH_MAJOR:
+				case ABS_MT_WIDTH_MINOR:
+					break;
+			}
 		}
 
 		logger.debug(bob);
@@ -387,5 +359,32 @@ public class MTDevInputSource extends AbstractInputSource {
 		}
 
 		return;
+	}
+}
+
+class Interval<T extends Number> {
+	T min;
+	T max;
+	
+	public Interval(T min,	T max) {
+		this.min = min;
+		this.max = max;
+	}
+	
+	public T getMin() {
+		return min;
+	}
+	
+	public T getMax() {
+		return max;
+	}
+	
+	public double getLength() {
+		return (getMax().doubleValue() - getMin().doubleValue());
+	}
+	
+	@Override
+	public String toString() {
+		return "[" + min + ";" + max + "]";
 	}
 }
