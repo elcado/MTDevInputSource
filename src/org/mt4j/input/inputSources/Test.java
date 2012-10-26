@@ -6,7 +6,7 @@ public class Test {
 	public static void main(String[] args) {
 		MTDevInputSource mtdevice = null;
 		try {
-			mtdevice = MTDevInputSource.openMTDevice("/dev/input/event4");
+			mtdevice = new MTDevInputSource("/dev/input/event25");
 			
 			// work with device
 			;

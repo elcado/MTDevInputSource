@@ -1,7 +1,8 @@
 package org.mt4j.input.inputSources;
 
-public class MTDevInputSource {
 
+public class MTDevInputSource {//extends AbstractInputSource {
+	
 	static {
 		// load native lib
 		System.loadLibrary("mtdev4j");
@@ -10,50 +11,81 @@ public class MTDevInputSource {
 	/*
 	 * Native functions
 	 */
-	private native static MTDevInputSource openDevice(String dev);
-
+	
+	/** Open the device. */
+	private native boolean openDevice(String devFileName);
+	/** Load mtdev capabillties. */
+	private native void loadDeviceCaps();
+	/** Close the device. */
 	private native void closeDevice();
+	
+	/*
+	 * Device caps (DO NOT modify these fileds as they are directly accessed in native code)
+	 */
+	
+	/** MT slot being modified */
+	private int ABS_MT_SLOT;
+	private boolean is_ABS_MT_SLOT = false;
+	/** Major axis of touching ellipse */
+	private int ABS_MT_TOUCH_MAJOR;
+	private boolean is_ABS_MT_TOUCH_MAJOR = false;
+	/** Minor axis (omit if circular) */
+	private int ABS_MT_TOUCH_MINOR;
+	private boolean is_ABS_MT_TOUCH_MINOR = false;
+	/** Major axis of approaching ellipse */
+	private int ABS_MT_WIDTH_MAJOR;
+	private boolean is_ABS_MT_WIDTH_MAJOR = false;
+	/** Minor axis (omit if circular) */
+	private int ABS_MT_WIDTH_MINOR;
+	private boolean is_ABS_MT_WIDTH_MINOR = false;
+	/** Ellipse orientation */
+	private int ABS_MT_ORIENTATION;
+	private boolean is_ABS_MT_ORIENTATION = false;
+	/** Center X ellipse position */
+	private int ABS_MT_POSITION_X;
+	private boolean is_ABS_MT_POSITION_X = false;
+	/** Center Y ellipse position */
+	private int ABS_MT_POSITION_Y;
+	private boolean is_ABS_MT_POSITION_Y = false;
+	/** Type of touching device */
+	private int ABS_MT_TOOL_TYPE;
+	private boolean is_ABS_MT_TOOL_TYPE = false;
+	/** Group a set of packets as a blob */
+	private int ABS_MT_BLOB_ID;
+	private boolean is_ABS_MT_BLOB_ID = false;
+	/** Unique ID of initiated contact */
+	private int ABS_MT_TRACKING_ID;
+	private boolean is_ABS_MT_TRACKING_ID = false;
+	/** Pressure on contact area */
+	private int ABS_MT_PRESSURE;
+	private boolean is_ABS_MT_PRESSURE = false;
+	/** Contact hover distance */
+	private int ABS_MT_DISTANCE;
+	private boolean is_ABS_MT_DISTANCE = false;
 
-	public static MTDevInputSource openMTDevice(String devFileName) {
-		MTDevInputSource device = MTDevInputSource.openDevice(devFileName);
+//	public MTDevInputSource(AbstractMTApplication mtApp) {
+//		super(mtApp);
+//	}
 
-		// try to open device
-		if (device != null) {
-			System.out.println(device);
+	/**
+	 * Build a mtdev on the supplied device.
+	 * 
+	 * @param devFileName device events filename (smth like /dev/input/eventXX)
+	 */
+	public MTDevInputSource(String devFileName) {
+		if (this.openDevice(devFileName)) {
+			// get device capabilities
+			this.loadDeviceCaps();
+			System.out.println(this);
 		}
-
-		return device;
 	}
 
-	/*
-	 * Device caps
-	 */
-	private int ABS_MT_SLOT; /* MT slot being modified */
-	private boolean is_ABS_MT_SLOT = false;
-	private int ABS_MT_TOUCH_MAJOR; /* Major axis of touching ellipse */
-	private boolean is_ABS_MT_TOUCH_MAJOR = false;
-	private int ABS_MT_TOUCH_MINOR; /* Minor axis (omit if circular) */
-	private boolean is_ABS_MT_TOUCH_MINOR = false;
-	private int ABS_MT_WIDTH_MAJOR; /* Major axis of approaching ellipse */
-	private boolean is_ABS_MT_WIDTH_MAJOR = false;
-	private int ABS_MT_WIDTH_MINOR; /* Minor axis (omit if circular) */
-	private boolean is_ABS_MT_WIDTH_MINOR = false;
-	private int ABS_MT_ORIENTATION; /* Ellipse orientation */
-	private boolean is_ABS_MT_ORIENTATION = false;
-	private int ABS_MT_POSITION_X; /* Center X ellipse position */
-	private boolean is_ABS_MT_POSITION_X = false;
-	private int ABS_MT_POSITION_Y; /* Center Y ellipse position */
-	private boolean is_ABS_MT_POSITION_Y = false;
-	private int ABS_MT_TOOL_TYPE; /* Type of touching device */
-	private boolean is_ABS_MT_TOOL_TYPE = false;
-	private int ABS_MT_BLOB_ID; /* Group a set of packets as a blob */
-	private boolean is_ABS_MT_BLOB_ID = false;
-	private int ABS_MT_TRACKING_ID; /* Unique ID of initiated contact */
-	private boolean is_ABS_MT_TRACKING_ID = false;
-	private int ABS_MT_PRESSURE; /* Pressure on contact area */
-	private boolean is_ABS_MT_PRESSURE = false;
-	private int ABS_MT_DISTANCE; /* Contact hover distance */
-	private boolean is_ABS_MT_DISTANCE = false;
+	@Override
+	protected void finalize() throws Throwable {
+		this.closeMTDevice();
+
+		super.finalize();
+	}
 
 	public void closeMTDevice() {
 		this.closeDevice();
