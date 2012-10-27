@@ -38,7 +38,7 @@ public class MTDevInputEvt  extends MTFingerInputEvt {
 		this(source, positionX, positionY, 0, 15, 15, id, m);
 	}
 	
-	public MTDevInputEvt(AbstractInputSource source, float positionX, float orientationTouch, float positionY, float majorTouch, float minorTouch, int id, InputCursor m) {
+	public MTDevInputEvt(AbstractInputSource source, float positionX, float positionY, float orientationTouch, float majorTouch, float minorTouch, int id, InputCursor m) {
 		super(source, positionX, positionY, id, m);
 
 		this.orientationTouch = orientationTouch;
