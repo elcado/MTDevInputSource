@@ -264,7 +264,6 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 				// init an INPUT_ENDED event
 				slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this,
 					currentSlotEvt.getX(), currentSlotEvt.getY(),
-					currentSlotEvt.getMajorTouch(), currentSlotEvt.getMinorTouch(),
 					MTFingerInputEvt.INPUT_ENDED, inputCursor));
 			}
 
@@ -305,18 +304,8 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 				case ABS_MT_PRESSURE: break;
 				case ABS_MT_SLOT: break;
 				case ABS_MT_TOOL_TYPE: break;
-				case ABS_MT_TOUCH_MAJOR:
-					// correct form device to screen coord
-					float touchMajor = normEvtValue * this.mtApp.getWidth();
-					currentSlotEvt.setMajorTouch(touchMajor);
-	
-					break;
-				case ABS_MT_TOUCH_MINOR:
-					// correct form device to screen coord
-					float touchMinor = normEvtValue * this.mtApp.getHeight();
-					currentSlotEvt.setMinorTouch(touchMinor);
-	
-					break;
+				case ABS_MT_TOUCH_MAJOR: break;
+				case ABS_MT_TOUCH_MINOR: break;
 				case ABS_MT_WIDTH_MAJOR: break;
 				case ABS_MT_WIDTH_MINOR: break;
 			}
@@ -351,7 +340,6 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 						// init an INPUT_UPDATED event for next mtdev events
 						slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this,
 							pendingEvent.getX(), pendingEvent.getY(),
-							pendingEvent.getMajorTouch(), pendingEvent.getMinorTouch(),
 							MTFingerInputEvt.INPUT_UPDATED, inputCursor));
 
 						break;
