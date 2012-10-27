@@ -11,10 +11,12 @@ import org.mt4j.input.inputData.ActiveCursorPool;
 import org.mt4j.input.inputData.InputCursor;
 import org.mt4j.input.inputData.MTDevInputEvt;
 import org.mt4j.input.inputData.MTFingerInputEvt;
+import org.mt4j.input.inputSources.MTDevInputSource.ABS_MT_CODE;
+import org.mt4j.input.inputSources.MTDevInputSource.ABS_MT_TYPE;
 import org.mt4j.util.logging.ILogger;
 import org.mt4j.util.logging.MTLoggerFactory;
 
-public class MTDevInputSource extends AbstractInputSource {
+public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 	/** The Constant logger. */
 	private static final ILogger logger = MTLoggerFactory.getLogger(MTDevInputSource.class.getName());
 	static {
@@ -96,23 +98,26 @@ public class MTDevInputSource extends AbstractInputSource {
 	private native void closeDevice();
 
 	/**
-	 * Device name (DO NOT modify this field as it is directly accessed from native code)
+	 * Device name
 	 */
 	private String devName;
+	
+	/* (non-Javadoc)
+	 * @see org.mt4j.input.inputSources.Cmtdev4j#setDevName(java.lang.String)
+	 */
+	@Override
+	public void setDevName(String devName) { this.devName = devName; }
 
 	/**
 	 * Device caps
 	 */
 	private Map<ABS_MT_CODE, Interval<Integer>> abs_mt_caps = new HashMap<>();
 	
-	/**
-	 * mtdev4j event callback (DO NOT modify this method as it is directly accessed from native code)
-	 * 
-	 * @param code {@link ABS_MT_CODE} capability code
-	 * @param min capability min value
-	 * @param max capability max value
+	/* (non-Javadoc)
+	 * @see org.mt4j.input.inputSources.Cmtdev4j#addCap(int, int, int)
 	 */
-	private void addCap(int code, int min, int max) {
+	@Override
+	public void addCap(int code, int min, int max) {
 		abs_mt_caps.put(ABS_MT_CODE.fromValue(code), new Interval<Integer>(min, max));
 	}
 
@@ -192,15 +197,11 @@ public class MTDevInputSource extends AbstractInputSource {
 	private Map<Integer, Long> slotIdToCursorID = new HashMap<>();
 	private Map<Integer, MTDevInputEvt> slotIdToCurrentEvt = new HashMap<>();
 
-	/**
-	 * mtdev4j event callback (DO NOT modify this method as it is directly accessed from native code)
-	 * 
-	 * @param slotId slot id concerned by this event (in case evtType != SYN_REPORT, otherwise all slots are concerned)
-	 * @param evtType event type (see {@link ABS_MT_TYPE})
-	 * @param evtCode event code (see {@link ABS_MT_CODE})
-	 * @param evtValue event value
+	/* (non-Javadoc)
+	 * @see org.mt4j.input.inputSources.Cmtdev4j#onMTDevTouch(int, int, int, int)
 	 */
-	private void onMTDevTouch(int slotId, int evtType, int evtCode, int evtValue) {
+	@Override
+	public void onMTDevTouch(int slotId, int evtType, int evtCode, int evtValue) {
 		// SYN_REPORT
 		if (ABS_MT_TYPE.fromValue(evtType) == ABS_MT_TYPE.SYN_REPORT) {
 			logger.debug("SYN_REPORT");
@@ -255,7 +256,9 @@ public class MTDevInputSource extends AbstractInputSource {
 				InputCursor inputCursor = ActiveCursorPool.getInstance().getActiveCursorByID(cursorId);
 
 				// init an INPUT_ENDED event
-				slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this, currentSlotEvt.getX(), currentSlotEvt.getY(),
+				slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this,
+					currentSlotEvt.getX(), currentSlotEvt.getY(),
+					currentSlotEvt.getMajorTouch(), currentSlotEvt.getMinorTouch(),
 					MTFingerInputEvt.INPUT_ENDED, inputCursor));
 			}
 
@@ -277,8 +280,7 @@ public class MTDevInputSource extends AbstractInputSource {
 
 			// switch on event code
 			switch (evtMTCode) {
-				case ABS_MT_TRACKING_ID:
-					break;
+				case ABS_MT_TRACKING_ID: break;
 				case ABS_MT_POSITION_X:
 					// correct form device to screen coord
 					float screenX = normEvtValue * this.mtApp.getWidth();
@@ -287,21 +289,30 @@ public class MTDevInputSource extends AbstractInputSource {
 					break;
 				case ABS_MT_POSITION_Y:
 					// correct form device to screen coord
-					float screenY = normEvtValue * this.mtApp.getWidth();
+					float screenY = normEvtValue * this.mtApp.getHeight();
 					currentSlotEvt.setScreenY(screenY);
 	
 					break;
-				case ABS_MT_BLOB_ID:
-				case ABS_MT_DISTANCE:
-				case ABS_MT_ORIENTATION:
-				case ABS_MT_PRESSURE:
-				case ABS_MT_SLOT:
-				case ABS_MT_TOOL_TYPE:
+				case ABS_MT_BLOB_ID: break;
+				case ABS_MT_DISTANCE: break;
+				case ABS_MT_ORIENTATION: break;
+				case ABS_MT_PRESSURE: break;
+				case ABS_MT_SLOT: break;
+				case ABS_MT_TOOL_TYPE: break;
 				case ABS_MT_TOUCH_MAJOR:
-				case ABS_MT_TOUCH_MINOR:
-				case ABS_MT_WIDTH_MAJOR:
-				case ABS_MT_WIDTH_MINOR:
+					// correct form device to screen coord
+					float touchMajor = normEvtValue * this.mtApp.getWidth();
+					currentSlotEvt.setMajorTouch(touchMajor);
+	
 					break;
+				case ABS_MT_TOUCH_MINOR:
+					// correct form device to screen coord
+					float touchMinor = normEvtValue * this.mtApp.getHeight();
+					currentSlotEvt.setMinorTouch(touchMinor);
+	
+					break;
+				case ABS_MT_WIDTH_MAJOR: break;
+				case ABS_MT_WIDTH_MINOR: break;
 			}
 		}
 
@@ -332,7 +343,9 @@ public class MTDevInputSource extends AbstractInputSource {
 						InputCursor inputCursor = ActiveCursorPool.getInstance().getActiveCursorByID(cursorId);
 
 						// init an INPUT_UPDATED event for next mtdev events
-						slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this, pendingEvent.getX(), pendingEvent.getY(),
+						slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this,
+							pendingEvent.getX(), pendingEvent.getY(),
+							pendingEvent.getMajorTouch(), pendingEvent.getMinorTouch(),
 							MTFingerInputEvt.INPUT_UPDATED, inputCursor));
 
 						break;
@@ -351,7 +364,7 @@ public class MTDevInputSource extends AbstractInputSource {
 			}
 		}
 
-		// clean maps
+		// clean internal maps
 		for (Integer slotId : slotIdToFree) {
 			slotIdToCurrentEvt.remove(slotId);
 			slotIdToCursorID.remove(slotId);
@@ -362,6 +375,56 @@ public class MTDevInputSource extends AbstractInputSource {
 	}
 }
 
+/**
+ * This interface describes methods called by the native mtdev4j library. DO NOT modify this interface, otherwise the native will fail and crash the
+ * JVM.
+ * 
+ * @author Frédéric Cadier
+ */
+interface Cmtdev4j {
+
+	/**
+	 * Set the mtdev device's friendly name
+	 * 
+	 * @param devName device name
+	 */
+	public abstract void setDevName(String devName);
+
+	/**
+	 * Call this to add a mtdev capability.
+	 * 
+	 * @param code
+	 *            {@link ABS_MT_CODE} capability code
+	 * @param min
+	 *            capability min value
+	 * @param max
+	 *            capability max value
+	 */
+	public abstract void addCap(int code, int min, int max);
+
+	/**
+	 * Event callback: call this for each mtdev event.
+	 * 
+	 * @param slotId
+	 *            slot id concerned by this event (in case evtType != SYN_REPORT, otherwise all slots are concerned)
+	 * @param evtType
+	 *            event type (see {@link ABS_MT_TYPE})
+	 * @param evtCode
+	 *            event code (see {@link ABS_MT_CODE})
+	 * @param evtValue
+	 *            event value
+	 */
+	public abstract void onMTDevTouch(int slotId, int evtType, int evtCode, int evtValue);
+
+}
+
+/**
+ * Helper class for numeric interval handling.
+ * 
+ * @author Frédéric Cadier
+ *
+ * @param <T> interval's type: T must extends Number
+ */
 class Interval<T extends Number> {
 	T min;
 	T max;

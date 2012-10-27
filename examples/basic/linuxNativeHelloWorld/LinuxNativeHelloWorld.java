@@ -4,8 +4,7 @@ import org.mt4j.MTApplication;
 import org.mt4j.input.InputManager;
 import org.mt4j.input.inputSources.AbstractInputSource;
 import org.mt4j.input.inputSources.MTDevInputSource;
-
-import basic.helloWorld.HelloWorldScene;
+import org.mt4j.sceneManagement.AbstractScene;
 
 public class LinuxNativeHelloWorld extends MTApplication {
 	public static void main(String[] args) {
@@ -37,6 +36,12 @@ public class LinuxNativeHelloWorld extends MTApplication {
 		inputManager.registerInputSource(new MTDevInputSource(this, "/dev/input/event4"));
 
 		// build scene
-		this.addScene(new HelloWorldScene(this, "Test - Linux native mtdev support"));
+		this.addScene(new AbstractScene(this, "Test - Linux native mtdev support") {
+			@Override
+			public void onEnter() {
+//				this.registerGlobalInputProcessor(new CursorTracer(LinuxNativeHelloWorld.this, this));
+				this.registerGlobalInputProcessor(new MTDevCursorTracer(LinuxNativeHelloWorld.this, this));
+			}
+		});
 	}
 }
