@@ -24,6 +24,7 @@ public class MTDevInputEvt  extends MTFingerInputEvt {
 		this.majorTouch = majorTouch;
 	}
 	
+	/** Get major axis of touching ellipse */
 	public float getMajorTouch() {
 		return majorTouch;
 	}
@@ -32,6 +33,7 @@ public class MTDevInputEvt  extends MTFingerInputEvt {
 		this.minorTouch = minorTouch;
 	}
 	
+	/** Get minor axis of touching ellipse */
 	public float getMinorTouch() {
 		return minorTouch;
 	}

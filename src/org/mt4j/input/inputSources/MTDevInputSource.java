@@ -11,8 +11,8 @@ import org.mt4j.input.inputData.ActiveCursorPool;
 import org.mt4j.input.inputData.InputCursor;
 import org.mt4j.input.inputData.MTDevInputEvt;
 import org.mt4j.input.inputData.MTFingerInputEvt;
-import org.mt4j.input.inputSources.MTDevInputSource.ABS_MT_CODE;
-import org.mt4j.input.inputSources.MTDevInputSource.ABS_MT_TYPE;
+import org.mt4j.input.inputSources.MTDevInputSource.ABS_MT_CONSTANT;
+import org.mt4j.input.inputSources.MTDevInputSource.SYN_CONSTANT;
 import org.mt4j.util.logging.ILogger;
 import org.mt4j.util.logging.MTLoggerFactory;
 
@@ -25,7 +25,10 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 //		logger.setLevel(ILogger.DEBUG);
 	}
 	
-	enum ABS_MT_CODE {
+	/**
+	 * ABS_MT_* constants defined in /usr/include/linux/input.h
+	 */
+	enum ABS_MT_CONSTANT {
 		/** Number of device's slots */
 		ABS_MT_SLOT(0x2f),
 		/** Major axis of touching ellipse */
@@ -55,29 +58,32 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 
 		private int numericValue;
 
-		private ABS_MT_CODE(int numericValue) {
+		private ABS_MT_CONSTANT(int numericValue) {
 			this.numericValue = numericValue;
 		}
 
-		public static ABS_MT_CODE fromValue(int numericValue) {
-			for (ABS_MT_CODE abs_mt_const : ABS_MT_CODE.values())
+		public static ABS_MT_CONSTANT fromValue(int numericValue) {
+			for (ABS_MT_CONSTANT abs_mt_const : ABS_MT_CONSTANT.values())
 				if (abs_mt_const.numericValue == numericValue)
 					return abs_mt_const;
 			return null;
 		}
 	}
 
-	enum ABS_MT_TYPE {
+	/**
+	 * SYN_* constants defined in /usr/include/linux/input.h
+	 */
+	enum SYN_CONSTANT {
 		SYN_REPORT(0x00);
 
 		private int numericValue;
 
-		private ABS_MT_TYPE(int numericValue) {
+		private SYN_CONSTANT(int numericValue) {
 			this.numericValue = numericValue;
 		}
 
-		public static ABS_MT_TYPE fromValue(int numericValue) {
-			for (ABS_MT_TYPE abs_mt_type : ABS_MT_TYPE.values())
+		public static SYN_CONSTANT fromValue(int numericValue) {
+			for (SYN_CONSTANT abs_mt_type : SYN_CONSTANT.values())
 				if (abs_mt_type.numericValue == numericValue)
 					return abs_mt_type;
 			return null;
@@ -111,14 +117,14 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 	/**
 	 * Device caps
 	 */
-	private Map<ABS_MT_CODE, Interval<Integer>> abs_mt_caps = new HashMap<>();
+	private Map<ABS_MT_CONSTANT, Interval<Integer>> abs_mt_caps = new HashMap<>();
 	
 	/* (non-Javadoc)
 	 * @see org.mt4j.input.inputSources.Cmtdev4j#addCap(int, int, int)
 	 */
 	@Override
 	public void addCap(int code, int min, int max) {
-		abs_mt_caps.put(ABS_MT_CODE.fromValue(code), new Interval<Integer>(min, max));
+		abs_mt_caps.put(ABS_MT_CONSTANT.fromValue(code), new Interval<Integer>(min, max));
 	}
 
 	private AbstractMTApplication mtApp;
@@ -161,7 +167,7 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 		if (!loaded) return;
 		
 		logger.info("Linux native mtdev device '" + devName + "'");
-		for (Entry<ABS_MT_CODE, Interval<Integer>> cap : abs_mt_caps.entrySet()) {
+		for (Entry<ABS_MT_CONSTANT, Interval<Integer>> cap : abs_mt_caps.entrySet()) {
 			logger.debug(cap.getKey().name() + " " + cap.getValue().toString());
 		}
 
@@ -203,7 +209,7 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 	@Override
 	public void onMTDevTouch(int slotId, int evtType, int evtCode, int evtValue) {
 		// SYN_REPORT
-		if (ABS_MT_TYPE.fromValue(evtType) == ABS_MT_TYPE.SYN_REPORT) {
+		if (SYN_CONSTANT.fromValue(evtType) == SYN_CONSTANT.SYN_REPORT) {
 			logger.debug("SYN_REPORT");
 
 			// fire all built MTDevInputEvt events
@@ -216,7 +222,7 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 		bob.append("[" + slotId + "] ");
 
 		// parse evtCode and return if not handled
-		ABS_MT_CODE evtMTCode = ABS_MT_CODE.fromValue(evtCode);
+		ABS_MT_CONSTANT evtMTCode = ABS_MT_CONSTANT.fromValue(evtCode);
 		if (evtMTCode == null)
 			return;
 
@@ -224,7 +230,7 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 		MTDevInputEvt currentSlotEvt = slotIdToCurrentEvt.get(slotId);
 
 		// handle ABS_MT_TRACKING_ID
-		if (evtMTCode == ABS_MT_CODE.ABS_MT_TRACKING_ID) {
+		if (evtMTCode == ABS_MT_CONSTANT.ABS_MT_TRACKING_ID) {
 			// ABS_MT_TRACKING_ID:
 			// - evtValue >= 0 -> starts MTDevInputEvt event
 			if (evtValue >= 0) {
@@ -394,7 +400,7 @@ interface Cmtdev4j {
 	 * Call this to add a mtdev capability.
 	 * 
 	 * @param code
-	 *            {@link ABS_MT_CODE} capability code
+	 *            {@link ABS_MT_CONSTANT} capability code
 	 * @param min
 	 *            capability min value
 	 * @param max
@@ -408,9 +414,9 @@ interface Cmtdev4j {
 	 * @param slotId
 	 *            slot id concerned by this event (in case evtType != SYN_REPORT, otherwise all slots are concerned)
 	 * @param evtType
-	 *            event type (see {@link ABS_MT_TYPE})
+	 *            event type (see {@link SYN_CONSTANT})
 	 * @param evtCode
-	 *            event code (see {@link ABS_MT_CODE})
+	 *            event code (see {@link ABS_MT_CONSTANT})
 	 * @param evtValue
 	 *            event value
 	 */
