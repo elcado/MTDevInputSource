@@ -2,6 +2,7 @@ package basic.linuxNativeHelloWorld;
 
 import org.mt4j.MTApplication;
 import org.mt4j.input.InputManager;
+import org.mt4j.input.inputProcessors.globalProcessors.CursorTracer;
 import org.mt4j.input.inputSources.AbstractInputSource;
 import org.mt4j.input.inputSources.MTDevInputSource;
 import org.mt4j.sceneManagement.AbstractScene;
@@ -39,8 +40,7 @@ public class LinuxNativeHelloWorld extends MTApplication {
 		this.addScene(new AbstractScene(this, "Test - Linux native mtdev support") {
 			@Override
 			public void onEnter() {
-//				this.registerGlobalInputProcessor(new CursorTracer(LinuxNativeHelloWorld.this, this));
-				this.registerGlobalInputProcessor(new MTDevCursorTracer(LinuxNativeHelloWorld.this, this));
+				this.registerGlobalInputProcessor(new CursorTracer(LinuxNativeHelloWorld.this, this));
 			}
 		});
 	}

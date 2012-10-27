@@ -1,3 +1,20 @@
+/**
+ * Copyright 2012 Frédéric Cadier <f.cadier@free.fr>
+ * 
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
 package org.mt4j.input.inputSources;
 
 import java.util.ArrayList;
@@ -16,6 +33,11 @@ import org.mt4j.input.inputSources.MTDevInputSource.SYN_CONSTANT;
 import org.mt4j.util.logging.ILogger;
 import org.mt4j.util.logging.MTLoggerFactory;
 
+/**
+ * Linux native mtdev input source.
+ * 
+ * @author Frédéric Cadier
+ */
 public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 	/** The Constant logger. */
 	private static final ILogger logger = MTLoggerFactory.getLogger(MTDevInputSource.class.getName());
@@ -264,7 +286,6 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 				// init an INPUT_ENDED event
 				slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this,
 					currentSlotEvt.getX(), currentSlotEvt.getY(),
-					currentSlotEvt.getMajorTouch(), currentSlotEvt.getMinorTouch(),
 					MTFingerInputEvt.INPUT_ENDED, inputCursor));
 			}
 
@@ -305,18 +326,8 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 				case ABS_MT_PRESSURE: break;
 				case ABS_MT_SLOT: break;
 				case ABS_MT_TOOL_TYPE: break;
-				case ABS_MT_TOUCH_MAJOR:
-					// correct form device to screen coord
-					float touchMajor = normEvtValue * this.mtApp.getWidth();
-					currentSlotEvt.setMajorTouch(touchMajor);
-	
-					break;
-				case ABS_MT_TOUCH_MINOR:
-					// correct form device to screen coord
-					float touchMinor = normEvtValue * this.mtApp.getHeight();
-					currentSlotEvt.setMinorTouch(touchMinor);
-	
-					break;
+				case ABS_MT_TOUCH_MAJOR: break;
+				case ABS_MT_TOUCH_MINOR: break;
 				case ABS_MT_WIDTH_MAJOR: break;
 				case ABS_MT_WIDTH_MINOR: break;
 			}
@@ -351,7 +362,6 @@ public class MTDevInputSource extends AbstractInputSource implements Cmtdev4j {
 						// init an INPUT_UPDATED event for next mtdev events
 						slotIdToCurrentEvt.put(slotId, new MTDevInputEvt(this,
 							pendingEvent.getX(), pendingEvent.getY(),
-							pendingEvent.getMajorTouch(), pendingEvent.getMinorTouch(),
 							MTFingerInputEvt.INPUT_UPDATED, inputCursor));
 
 						break;
