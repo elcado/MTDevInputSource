@@ -26,20 +26,33 @@ import org.mt4j.input.inputSources.AbstractInputSource;
  */
 public class MTDevInputEvt  extends MTFingerInputEvt {
 	
+	/** Orientation of touching ellipse */
+	private float orientationTouch;
+	
 	/** Major axis of touching ellipse */
 	private float majorTouch;
 	/** Minor axis of touching ellipse */
 	private float minorTouch;
 
 	public MTDevInputEvt(AbstractInputSource source, float positionX, float positionY, int id, InputCursor m) {
-		this(source, positionX, positionY, 15, 15, id, m);
+		this(source, positionX, positionY, 0, 15, 15, id, m);
 	}
 	
-	public MTDevInputEvt(AbstractInputSource source, float positionX, float positionY, float majorTouch, float minorTouch, int id, InputCursor m) {
+	public MTDevInputEvt(AbstractInputSource source, float positionX, float orientationTouch, float positionY, float majorTouch, float minorTouch, int id, InputCursor m) {
 		super(source, positionX, positionY, id, m);
 
+		this.orientationTouch = orientationTouch;
 		this.majorTouch = majorTouch;
 		this.minorTouch = minorTouch;
+	}
+	
+	public void setOrientationTouch(float orientationTouch) {
+		this.orientationTouch = orientationTouch;
+	}
+	
+	/** Get orientation of touching ellipse */
+	public float getOrientationTouch() {
+		return orientationTouch;
 	}
 	
 	public void setMajorTouch(float majorTouch) {
