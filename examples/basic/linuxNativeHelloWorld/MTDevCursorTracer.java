@@ -58,11 +58,13 @@ public class MTDevCursorTracer extends AbstractGlobalInputProcessor {
 	 * 
 	 * @param applet the applet
 	 * @param position the position
+	 * @param radiusY2 
 	 * 
 	 * @return the abstract shape
 	 */
-	protected CursorEllipse createDisplayComponent(PApplet applet, Vector3D position, float radiusX, float radiusY){
-		CursorEllipse displayShape = new CursorEllipse(applet, position, radiusX, radiusY, 15);
+	protected CursorEllipse createDisplayComponent(PApplet applet, Vector3D position, float orientation, float radiusX, float radiusY){
+		CursorEllipse displayShape = new CursorEllipse(applet, position, radiusX, radiusY, 30);
+		displayShape.rotateZ(displayShape.getCenterOfMass2DLocal(), 90*orientation);
 		displayShape.setPickable(false);
 		displayShape.setNoFill(true);
 		displayShape.setDrawSmooth(true);
@@ -97,17 +99,19 @@ public class MTDevCursorTracer extends AbstractGlobalInputProcessor {
 			InputCursor c = ((AbstractCursorInputEvt)inputEvent).getCursor();
 			Vector3D position = new Vector3D(cursorEvt.getX(), cursorEvt.getY());
 			
+			float orientation = 0;
 			float radiusX = ellipseDefaultRadius;
 			float radiusY = ellipseDefaultRadius;
 			if (cursorEvt instanceof MTDevInputEvt) {
-				radiusX = ((MTDevInputEvt) cursorEvt).getMajorTouch();
-				radiusY = ((MTDevInputEvt) cursorEvt).getMinorTouch();
+				orientation = ((MTDevInputEvt) cursorEvt).getOrientationTouch();
+				radiusX = ((MTDevInputEvt) cursorEvt).getMajorTouch() / 2;
+				radiusY = ((MTDevInputEvt) cursorEvt).getMinorTouch() / 2;
 			}
 
 			CursorEllipse displayShape = null;
 			switch (cursorEvt.getId()) {
 			case AbstractCursorInputEvt.INPUT_STARTED:
-				displayShape = createDisplayComponent(app, position, radiusX, radiusY);
+				displayShape = createDisplayComponent(app, position, 0, radiusX, radiusY);
 				cursorIDToDisplayShape.put(c, displayShape);
 				overlayGroup.addChild(displayShape);
 				displayShape.setPositionGlobal(position);
@@ -118,7 +122,7 @@ public class MTDevCursorTracer extends AbstractGlobalInputProcessor {
 			case AbstractCursorInputEvt.INPUT_UPDATED:
 				displayShape = cursorIDToDisplayShape.get(c);
 				if (displayShape != null){
-					CursorEllipse tmpShape = createDisplayComponent(app, position, radiusX, radiusY);
+					CursorEllipse tmpShape = createDisplayComponent(app, position, orientation, radiusX, radiusY);
 //					displayShape.setPositionGlobal(position);
 					displayShape.setVertices(tmpShape.getVerticesGlobal());
 				}
